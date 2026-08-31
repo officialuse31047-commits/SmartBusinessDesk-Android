@@ -54,13 +54,28 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Build release AAB
+      - name: Restore release keystore
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" \
+            | sed '/-----BEGIN CERTIFICATE-----/d;/-----END CERTIFICATE-----/d' \
+            | tr -d '\r\n' \
+            | base64 --decode > SmartBusinessDesk-release.jks
+          test -s SmartBusinessDesk-release.jks
+
+      - name: Build signed release AAB
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: gradle :app:bundleRelease --stacktrace
 
       - name: Rename AAB
         run: cp app/build/outputs/bundle/release/app-release.aab Smart-Business-Desk.aab
 
-      - name: Upload AAB
+      - name: Upload signed AAB
         uses: actions/upload-artifact@v4
         with:
           name: Smart-Business-Desk-AAB
