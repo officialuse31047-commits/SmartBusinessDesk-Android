@@ -21,6 +21,7 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.PermissionRequest;
 import android.webkit.SslErrorHandler;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
@@ -59,6 +60,7 @@ public class MainActivity extends Activity {
 
     private static final int REQUEST_FILE_CHOOSER = 4101;
     private static final int REQUEST_STORAGE_PERMISSION = 4102;
+    private static final int REQUEST_AUDIO_PERMISSION = 4103;
 
     private WebView webView;
     private SwipeRefreshLayout swipeRefresh;
@@ -69,6 +71,7 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> filePathCallback;
     private Uri pendingCameraUri;
     private PendingDownload pendingDownload;
+    private PermissionRequest pendingWebPermissionRequest;
 
     private String lastIntendedUrl = HOME_URL;
 
@@ -300,7 +303,9 @@ public class MainActivity extends Activity {
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
             Toast.makeText(this,
-                    TextUtils.isEmpty(failureMessage) ? "No compatible app is installed." : failureMessage,
+                    TextUtils.isEmpty(failureMessage)
+                            ? "No compatible app is installed."
+                            : failureMessage,
                     Toast.LENGTH_SHORT).show();
         }
         return true;
@@ -369,12 +374,86 @@ public class MainActivity extends Activity {
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
             // Never bypass invalid SSL certificates.
             handler.cancel();
-            Toast.makeText(MainActivity.this,
-                    "Secure connection could not be verified.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    MainActivity.this,
+                    "Secure connection could not be verified.",
+                    Toast.LENGTH_LONG
+            ).show();
         }
     }
 
     private class SbdWebChromeClient extends WebChromeClient {
+
+        /**
+         * Handles microphone requests made by Smart Business Desk pages inside WebView.
+         * Only AUDIO_CAPTURE from the trusted Smart Business Desk HTTPS domains is granted.
+         */
+        @Override
+        public void onPermissionRequest(PermissionRequest request) {
+            runOnUiThread(() -> {
+                if (request == null) {
+                    return;
+                }
+
+                Uri origin = request.getOrigin();
+
+                if (origin == null
+                        || !"https".equalsIgnoreCase(origin.getScheme())
+                        || !isInternalHost(origin.getHost())) {
+                    request.deny();
+                    return;
+                }
+
+                boolean wantsAudioCapture = false;
+
+                String[] requestedResources = request.getResources();
+                if (requestedResources != null) {
+                    for (String resource : requestedResources) {
+                        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) {
+                            wantsAudioCapture = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!wantsAudioCapture) {
+                    request.deny();
+                    return;
+                }
+
+                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                        == PackageManager.PERMISSION_GRANTED) {
+
+                    request.grant(new String[]{
+                            PermissionRequest.RESOURCE_AUDIO_CAPTURE
+                    });
+
+                    return;
+                }
+
+                if (pendingWebPermissionRequest != null
+                        && pendingWebPermissionRequest != request) {
+                    pendingWebPermissionRequest.deny();
+                }
+
+                pendingWebPermissionRequest = request;
+
+                requestPermissions(
+                        new String[]{Manifest.permission.RECORD_AUDIO},
+                        REQUEST_AUDIO_PERMISSION
+                );
+            });
+        }
+
+        @Override
+        public void onPermissionRequestCanceled(PermissionRequest request) {
+            runOnUiThread(() -> {
+                if (pendingWebPermissionRequest == request) {
+                    pendingWebPermissionRequest = null;
+                }
+            });
+        }
+
         @Override
         public void onProgressChanged(WebView view, int newProgress) {
             super.onProgressChanged(view, newProgress);
@@ -388,9 +467,11 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        public boolean onShowFileChooser(WebView webView,
-                                         ValueCallback<Uri[]> filePathCallback,
-                                         FileChooserParams fileChooserParams) {
+        public boolean onShowFileChooser(
+                WebView webView,
+                ValueCallback<Uri[]> filePathCallback,
+                FileChooserParams fileChooserParams
+        ) {
             if (MainActivity.this.filePathCallback != null) {
                 MainActivity.this.filePathCallback.onReceiveValue(null);
             }
@@ -408,8 +489,11 @@ public class MainActivity extends Activity {
                     contentIntent.putExtra(Intent.EXTRA_MIME_TYPES, acceptTypes);
                 }
             }
-            contentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,
-                    fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+
+            contentIntent.putExtra(
+                    Intent.EXTRA_ALLOW_MULTIPLE,
+                    fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE
+            );
 
             List<Intent> extraIntents = new ArrayList<>();
             if (acceptsImages(acceptTypes) || fileChooserParams.isCaptureEnabled()) {
@@ -421,8 +505,10 @@ public class MainActivity extends Activity {
 
             Intent chooser = Intent.createChooser(contentIntent, "Choose file");
             if (!extraIntents.isEmpty()) {
-                chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS,
-                        extraIntents.toArray(new Intent[0]));
+                chooser.putExtra(
+                        Intent.EXTRA_INITIAL_INTENTS,
+                        extraIntents.toArray(new Intent[0])
+                );
             }
 
             try {
@@ -430,34 +516,49 @@ public class MainActivity extends Activity {
                 return true;
             } catch (ActivityNotFoundException e) {
                 MainActivity.this.filePathCallback = null;
-                Toast.makeText(MainActivity.this, "No file picker is available.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        MainActivity.this,
+                        "No file picker is available.",
+                        Toast.LENGTH_SHORT
+                ).show();
                 return false;
             }
         }
 
         @Override
-        public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture,
-                                      android.os.Message resultMsg) {
+        public boolean onCreateWindow(
+                WebView view,
+                boolean isDialog,
+                boolean isUserGesture,
+                android.os.Message resultMsg
+        ) {
             WebView popupWebView = new WebView(MainActivity.this);
             popupWebView.getSettings().setJavaScriptEnabled(true);
+
             popupWebView.setWebViewClient(new WebViewClient() {
                 private boolean consumed = false;
 
                 private void consume(String url) {
                     if (consumed || TextUtils.isEmpty(url)) return;
+
                     consumed = true;
                     Uri uri = Uri.parse(url);
+
                     if (isInternalHost(uri.getHost())) {
                         loadInternalUrl(url);
                     } else {
                         routeUrl(url);
                     }
+
                     popupWebView.stopLoading();
                     popupWebView.destroy();
                 }
 
                 @Override
-                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                public boolean shouldOverrideUrlLoading(
+                        WebView view,
+                        WebResourceRequest request
+                ) {
                     consume(request.getUrl().toString());
                     return true;
                 }
@@ -475,7 +576,9 @@ public class MainActivity extends Activity {
                 }
             });
 
-            WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+            WebView.WebViewTransport transport =
+                    (WebView.WebViewTransport) resultMsg.obj;
+
             transport.setWebView(popupWebView);
             resultMsg.sendToTarget();
             return true;
@@ -486,43 +589,71 @@ public class MainActivity extends Activity {
         if (rawTypes == null || rawTypes.length == 0) {
             return new String[]{"*/*"};
         }
+
         List<String> result = new ArrayList<>();
+
         for (String type : rawTypes) {
             if (!TextUtils.isEmpty(type)) {
                 result.add(type);
             }
         }
-        return result.isEmpty() ? new String[]{"*/*"} : result.toArray(new String[0]);
+
+        return result.isEmpty()
+                ? new String[]{"*/*"}
+                : result.toArray(new String[0]);
     }
 
     private boolean acceptsImages(String[] acceptTypes) {
         if (acceptTypes == null) return true;
+
         for (String type : acceptTypes) {
-            if ("*/*".equals(type) || type.toLowerCase(Locale.US).startsWith("image/")) {
+            if ("*/*".equals(type)
+                    || type.toLowerCase(Locale.US).startsWith("image/")) {
                 return true;
             }
         }
+
         return false;
     }
 
     private Intent createCameraIntent() {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
         if (cameraIntent.resolveActivity(getPackageManager()) == null) {
             return null;
         }
+
         try {
             File directory = new File(getExternalCacheDir(), "Pictures");
+
             if (!directory.exists() && !directory.mkdirs()) {
                 return null;
             }
-            File image = File.createTempFile("sbd_camera_", ".jpg", directory);
+
+            File image = File.createTempFile(
+                    "sbd_camera_",
+                    ".jpg",
+                    directory
+            );
+
             pendingCameraUri = FileProvider.getUriForFile(
                     this,
                     getPackageName() + ".fileprovider",
-                    image);
-            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
-            cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    image
+            );
+
+            cameraIntent.putExtra(
+                    MediaStore.EXTRA_OUTPUT,
+                    pendingCameraUri
+            );
+
+            cameraIntent.addFlags(
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            | Intent.FLAG_GRANT_READ_URI_PERMISSION
+            );
+
             return cameraIntent;
+
         } catch (IOException | IllegalArgumentException e) {
             pendingCameraUri = null;
             return null;
@@ -530,23 +661,37 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(
+            int requestCode,
+            int resultCode,
+            Intent data
+    ) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != REQUEST_FILE_CHOOSER || filePathCallback == null) {
+
+        if (requestCode != REQUEST_FILE_CHOOSER
+                || filePathCallback == null) {
             return;
         }
 
         Uri[] results = null;
+
         if (resultCode == RESULT_OK) {
             if (data != null && data.getClipData() != null) {
+
                 ClipData clipData = data.getClipData();
+
                 results = new Uri[clipData.getItemCount()];
+
                 for (int i = 0; i < clipData.getItemCount(); i++) {
                     results[i] = clipData.getItemAt(i).getUri();
                 }
+
             } else if (data != null && data.getData() != null) {
+
                 results = new Uri[]{data.getData()};
+
             } else if (pendingCameraUri != null) {
+
                 results = new Uri[]{pendingCameraUri};
             }
         }
@@ -556,84 +701,218 @@ public class MainActivity extends Activity {
         pendingCameraUri = null;
     }
 
-    private void handleDownload(String url, String userAgent, String contentDisposition, String mimeType) {
+    private void handleDownload(
+            String url,
+            String userAgent,
+            String contentDisposition,
+            String mimeType
+    ) {
         if (TextUtils.isEmpty(url)) return;
+
         Uri uri = Uri.parse(url);
-        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.US);
+
+        String scheme = uri.getScheme() == null
+                ? ""
+                : uri.getScheme().toLowerCase(Locale.US);
+
         if (!"http".equals(scheme) && !"https".equals(scheme)) {
-            Toast.makeText(this, "This download type cannot be saved directly.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    this,
+                    "This download type cannot be saved directly.",
+                    Toast.LENGTH_LONG
+            ).show();
             return;
         }
 
-        PendingDownload data = new PendingDownload(url, userAgent, contentDisposition, mimeType);
+        PendingDownload data =
+                new PendingDownload(
+                        url,
+                        userAgent,
+                        contentDisposition,
+                        mimeType
+                );
+
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P
-                && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
             pendingDownload = data;
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE_PERMISSION);
+
+            requestPermissions(
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_STORAGE_PERMISSION
+            );
+
             return;
         }
+
         enqueueDownload(data);
     }
 
     private void enqueueDownload(PendingDownload data) {
         try {
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(data.url));
-            String fileName = URLUtil.guessFileName(data.url, data.contentDisposition, data.mimeType);
+            DownloadManager.Request request =
+                    new DownloadManager.Request(Uri.parse(data.url));
+
+            String fileName =
+                    URLUtil.guessFileName(
+                            data.url,
+                            data.contentDisposition,
+                            data.mimeType
+                    );
+
             request.setTitle(fileName);
             request.setDescription("Downloading from Smart Business Desk");
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+            request.setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+            );
+
             request.setAllowedOverMetered(true);
             request.setAllowedOverRoaming(true);
+
             if (!TextUtils.isEmpty(data.mimeType)) {
                 request.setMimeType(data.mimeType);
             }
-            if (!TextUtils.isEmpty(data.userAgent)) {
-                request.addRequestHeader("User-Agent", data.userAgent);
-            }
-            String cookies = CookieManager.getInstance().getCookie(data.url);
-            if (!TextUtils.isEmpty(cookies)) {
-                request.addRequestHeader("Cookie", cookies);
-            }
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
 
-            DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            if (!TextUtils.isEmpty(data.userAgent)) {
+                request.addRequestHeader(
+                        "User-Agent",
+                        data.userAgent
+                );
+            }
+
+            String cookies =
+                    CookieManager.getInstance().getCookie(data.url);
+
+            if (!TextUtils.isEmpty(cookies)) {
+                request.addRequestHeader(
+                        "Cookie",
+                        cookies
+                );
+            }
+
+            request.setDestinationInExternalPublicDir(
+                    Environment.DIRECTORY_DOWNLOADS,
+                    fileName
+            );
+
+            DownloadManager manager =
+                    (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+
             manager.enqueue(request);
-            Toast.makeText(this, "Download started.", Toast.LENGTH_SHORT).show();
+
+            Toast.makeText(
+                    this,
+                    "Download started.",
+                    Toast.LENGTH_SHORT
+            ).show();
+
         } catch (Exception e) {
-            Toast.makeText(this, "Unable to start download.", Toast.LENGTH_LONG).show();
+            Toast.makeText(
+                    this,
+                    "Unable to start download.",
+                    Toast.LENGTH_LONG
+            ).show();
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_STORAGE_PERMISSION && pendingDownload != null) {
+    public void onRequestPermissionsResult(
+            int requestCode,
+            String[] permissions,
+            int[] grantResults
+    ) {
+        super.onRequestPermissionsResult(
+                requestCode,
+                permissions,
+                grantResults
+        );
+
+        if (requestCode == REQUEST_AUDIO_PERMISSION) {
+
+            PermissionRequest request = pendingWebPermissionRequest;
+            pendingWebPermissionRequest = null;
+
+            if (request != null) {
+
+                if (grantResults.length > 0
+                        && grantResults[0]
+                        == PackageManager.PERMISSION_GRANTED) {
+
+                    request.grant(new String[]{
+                            PermissionRequest.RESOURCE_AUDIO_CAPTURE
+                    });
+
+                } else {
+
+                    request.deny();
+
+                    Toast.makeText(
+                            this,
+                            "Microphone permission is required for voice input.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+            }
+
+            return;
+        }
+
+        if (requestCode == REQUEST_STORAGE_PERMISSION
+                && pendingDownload != null) {
+
             PendingDownload download = pendingDownload;
             pendingDownload = null;
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+            if (grantResults.length > 0
+                    && grantResults[0]
+                    == PackageManager.PERMISSION_GRANTED) {
+
                 enqueueDownload(download);
+
             } else {
-                Toast.makeText(this, "Storage permission is required to save this download.", Toast.LENGTH_LONG).show();
+
+                Toast.makeText(
+                        this,
+                        "Storage permission is required to save this download.",
+                        Toast.LENGTH_LONG
+                ).show();
             }
         }
     }
 
     private boolean isOnline() {
-        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager manager =
+                (ConnectivityManager)
+                        getSystemService(Context.CONNECTIVITY_SERVICE);
+
         if (manager == null) return false;
+
         Network network = manager.getActiveNetwork();
+
         if (network == null) return false;
-        NetworkCapabilities capabilities = manager.getNetworkCapabilities(network);
-        return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+
+        NetworkCapabilities capabilities =
+                manager.getNetworkCapabilities(network);
+
+        return capabilities != null
+                && capabilities.hasCapability(
+                NetworkCapabilities.NET_CAPABILITY_INTERNET
+        );
     }
 
     private void showOffline(String intendedUrl) {
         if (!TextUtils.isEmpty(intendedUrl)) {
+
             Uri uri = Uri.parse(intendedUrl);
+
             if (isInternalHost(uri.getHost())) {
-                lastIntendedUrl = normalizeInternalUrl(intendedUrl);
+                lastIntendedUrl =
+                        normalizeInternalUrl(intendedUrl);
             }
         }
+
         pageProgress.setVisibility(View.GONE);
         swipeRefresh.setRefreshing(false);
         swipeRefresh.setVisibility(View.GONE);
@@ -648,21 +927,36 @@ public class MainActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         webView.saveState(outState);
-        outState.putString("lastIntendedUrl", lastIntendedUrl);
+
+        outState.putString(
+                "lastIntendedUrl",
+                lastIntendedUrl
+        );
+
         if (pendingCameraUri != null) {
-            outState.putString("pendingCameraUri", pendingCameraUri.toString());
+            outState.putString(
+                    "pendingCameraUri",
+                    pendingCameraUri.toString()
+            );
         }
+
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        String restoredUrl = savedInstanceState.getString("lastIntendedUrl");
+
+        String restoredUrl =
+                savedInstanceState.getString("lastIntendedUrl");
+
         if (!TextUtils.isEmpty(restoredUrl)) {
             lastIntendedUrl = restoredUrl;
         }
-        String cameraUri = savedInstanceState.getString("pendingCameraUri");
+
+        String cameraUri =
+                savedInstanceState.getString("pendingCameraUri");
+
         if (!TextUtils.isEmpty(cameraUri)) {
             pendingCameraUri = Uri.parse(cameraUri);
         }
@@ -674,6 +968,7 @@ public class MainActivity extends Activity {
             super.onBackPressed();
             return;
         }
+
         if (webView.canGoBack()) {
             webView.goBack();
         } else {
@@ -683,26 +978,40 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+
+        if (pendingWebPermissionRequest != null) {
+            pendingWebPermissionRequest.deny();
+            pendingWebPermissionRequest = null;
+        }
+
         if (filePathCallback != null) {
             filePathCallback.onReceiveValue(null);
             filePathCallback = null;
         }
+
         if (webView != null) {
             webView.stopLoading();
             webView.setWebChromeClient(null);
             webView.setWebViewClient(null);
             webView.destroy();
         }
+
         super.onDestroy();
     }
 
     private static class PendingDownload {
+
         final String url;
         final String userAgent;
         final String contentDisposition;
         final String mimeType;
 
-        PendingDownload(String url, String userAgent, String contentDisposition, String mimeType) {
+        PendingDownload(
+                String url,
+                String userAgent,
+                String contentDisposition,
+                String mimeType
+        ) {
             this.url = url;
             this.userAgent = userAgent;
             this.contentDisposition = contentDisposition;
