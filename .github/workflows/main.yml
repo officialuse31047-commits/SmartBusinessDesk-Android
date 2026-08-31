@@ -1,4 +1,4 @@
-name: Build Smart Business Desk APK
+name: Build Smart Business Desk APK & AAB
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  build-debug-apk:
+  build-android:
     runs-on: ubuntu-latest
 
     steps:
@@ -51,5 +51,19 @@ jobs:
         with:
           name: Smart-Business-Desk-APK
           path: Smart-Business-Desk.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Build release AAB
+        run: gradle :app:bundleRelease --stacktrace
+
+      - name: Rename AAB
+        run: cp app/build/outputs/bundle/release/app-release.aab Smart-Business-Desk.aab
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: Smart-Business-Desk-AAB
+          path: Smart-Business-Desk.aab
           if-no-files-found: error
           retention-days: 30
