@@ -2,7 +2,7 @@
 
 **Website:** `https://supportclue.com/`
 **Package:** `com.supportclue.app`
-**Version:** `1.0.0` (`versionCode 1`)
+**Version:** `1.0.1` (`versionCode 2`)
 **Minimum Android:** Android 7.0 / API 24
 **Target / Compile SDK:** API 36
 
