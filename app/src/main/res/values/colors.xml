@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="support_clue_dark">#171B1F</color>
+    <color name="support_clue_dark">#082E68</color>
     <color name="support_clue_orange">#FF5A00</color>
     <color name="support_clue_orange_pressed">#D94700</color>
     <color name="support_clue_background">#FFFFFF</color>
