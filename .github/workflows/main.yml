@@ -1,9 +1,9 @@
-name: Build Smart Business Desk APK & AAB
+name: Build Support Clue APK & AAB
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "support-clue-rebrand" ]
 
 permissions:
   contents: read
@@ -44,13 +44,13 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Rename debug APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Smart-Business-Desk-Debug.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk Support-Clue-Debug.apk
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: Smart-Business-Desk-Debug-APK
-          path: Smart-Business-Desk-Debug.apk
+          name: Support-Clue-Debug-APK
+          path: Support-Clue-Debug.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -62,8 +62,8 @@ jobs:
           echo "$KEYSTORE_BASE64" \
             | sed '/-----BEGIN CERTIFICATE-----/d;/-----END CERTIFICATE-----/d' \
             | tr -d '\r\n' \
-            | base64 --decode > SmartBusinessDesk-release.jks
-          test -s SmartBusinessDesk-release.jks
+            | base64 --decode > SupportClue-release.jks
+          test -s SupportClue-release.jks
 
       - name: Build signed release AAB
         env:
@@ -73,13 +73,13 @@ jobs:
         run: gradle :app:bundleRelease --stacktrace
 
       - name: Rename AAB
-        run: cp app/build/outputs/bundle/release/app-release.aab Smart-Business-Desk.aab
+        run: cp app/build/outputs/bundle/release/app-release.aab Support-Clue.aab
 
       - name: Upload signed AAB
         uses: actions/upload-artifact@v4
         with:
-          name: Smart-Business-Desk-AAB
-          path: Smart-Business-Desk.aab
+          name: Support-Clue-AAB
+          path: Support-Clue.aab
           if-no-files-found: error
           retention-days: 30
 
@@ -91,12 +91,12 @@ jobs:
         run: gradle :app:assembleRelease --stacktrace
 
       - name: Rename signed release APK
-        run: cp app/build/outputs/apk/release/app-release.apk Smart-Business-Desk-Release.apk
+        run: cp app/build/outputs/apk/release/app-release.apk Support-Clue-Release.apk
 
       - name: Upload signed release APK
         uses: actions/upload-artifact@v4
         with:
-          name: Smart-Business-Desk-Release-APK
-          path: Smart-Business-Desk-Release.apk
+          name: Support-Clue-Release-APK
+          path: Support-Clue-Release.apk
           if-no-files-found: error
           retention-days: 30

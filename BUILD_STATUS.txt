@@ -1,4 +1,4 @@
-Smart Business Desk Native WebView project source has been created.
+Support Clue Native WebView project source has been rebranded from the existing project.
 
 Static architecture status:
 - Primary container: android.webkit.WebView
@@ -6,9 +6,9 @@ Static architecture status:
 - Chrome Custom Tabs: not used
 - androidx.browser: not used
 - Forced Chrome package: not used
-- Smart Business Desk internal links: remain in WebView
+- Support Clue internal links: remain in WebView
 
-APK compilation status in this ChatGPT runtime:
-The runtime currently does not contain an Android SDK / build-tools / Gradle installation, and outbound package downloads are unavailable from the build container. Therefore an APK binary could not be compiled locally in this run.
+APK compilation status in this workspace:
+Static validation completed. A local APK binary was not compiled because Gradle is not installed in this workspace.
 
-The Android Studio project itself is ready for Gradle sync/build in an Android development environment. Build/sign instructions are in README.md.
+GitHub Actions remains configured to build a debug APK, signed release APK, and signed AAB after the changes reach the main branch. Build/sign instructions are in README.md.

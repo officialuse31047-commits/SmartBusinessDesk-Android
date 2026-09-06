@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.smartbusinessdesk.app'
+    namespace 'com.supportclue.app'
     compileSdk 36
 
     defaultConfig {
-        applicationId 'com.smartbusinessdesk.app'
+        applicationId 'com.supportclue.app'
         minSdk 24
         targetSdk 36
         versionCode 1
@@ -16,7 +16,7 @@ android {
 
     signingConfigs {
         release {
-            storeFile rootProject.file("SmartBusinessDesk-release.jks")
+            storeFile rootProject.file("SupportClue-release.jks")
             storePassword System.getenv("KEYSTORE_PASSWORD")
             keyAlias System.getenv("KEY_ALIAS")
             keyPassword System.getenv("KEY_PASSWORD")

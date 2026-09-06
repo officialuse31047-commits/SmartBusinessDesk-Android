@@ -1,4 +1,4 @@
-package com.smartbusinessdesk.app;
+package com.supportclue.app;
 
 import android.Manifest;
 import android.app.Activity;
@@ -45,18 +45,18 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Smart Business Desk Android shell.
+ * Support Clue Android shell.
  *
  * IMPORTANT ARCHITECTURE NOTE:
  * The primary content container is android.webkit.WebView. This Activity does NOT use
  * external browser-wrapper APIs or a forced browser package.
- * smartbusinessdesk.com and www.smartbusinessdesk.com stay inside this WebView.
+ * supportclue.com and www.supportclue.com stay inside this WebView.
  */
 public class MainActivity extends Activity {
 
-    private static final String HOME_URL = "https://smartbusinessdesk.com/";
-    private static final String HOST_PRIMARY = "smartbusinessdesk.com";
-    private static final String HOST_WWW = "www.smartbusinessdesk.com";
+    private static final String HOME_URL = "https://supportclue.com/";
+    private static final String HOST_PRIMARY = "supportclue.com";
+    private static final String HOST_WWW = "www.supportclue.com";
 
     private static final int REQUEST_FILE_CHOOSER = 4101;
     private static final int REQUEST_STORAGE_PERMISSION = 4102;
@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         // Manifest uses the splash theme for the Android starting window; switch immediately
         // to the normal app theme as the Activity is created.
-        setTheme(R.style.Theme_SmartBusinessDesk);
+        setTheme(R.style.Theme_SupportClue);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -136,14 +136,17 @@ public class MainActivity extends Activity {
 
         WebView.setWebContentsDebuggingEnabled(false);
 
-        webView.setWebViewClient(new SbdWebViewClient());
-        webView.setWebChromeClient(new SbdWebChromeClient());
+        webView.setWebViewClient(new SupportClueWebViewClient());
+        webView.setWebChromeClient(new SupportClueWebChromeClient());
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) ->
                 handleDownload(url, userAgent, contentDisposition, mimeType));
     }
 
     private void configureRefreshAndOfflineUi() {
-        swipeRefresh.setColorSchemeResources(R.color.sbd_green, R.color.sbd_navy);
+        swipeRefresh.setColorSchemeResources(
+                R.color.support_clue_orange,
+                R.color.support_clue_dark
+        );
         swipeRefresh.setOnChildScrollUpCallback((parent, child) -> webView.getScrollY() > 0);
         swipeRefresh.setOnRefreshListener(() -> {
             if (isOnline()) {
@@ -176,7 +179,7 @@ public class MainActivity extends Activity {
         webView.loadUrl(safeUrl);
     }
 
-    /** Forces Smart Business Desk internal HTTP URLs to HTTPS and rejects other hosts. */
+    /** Forces Support Clue internal HTTP URLs to HTTPS and rejects other hosts. */
     private String normalizeInternalUrl(String rawUrl) {
         if (TextUtils.isEmpty(rawUrl)) {
             return HOME_URL;
@@ -235,7 +238,7 @@ public class MainActivity extends Activity {
 
         if ("http".equals(scheme) || "https".equals(scheme)) {
             if (isInternalHost(uri.getHost())) {
-                // Never route Smart Business Desk through Chrome or another browser.
+                // Never route Support Clue through Chrome or another browser.
                 if ("http".equals(scheme)) {
                     loadInternalUrl(rawUrl);
                     return true;
@@ -311,7 +314,7 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    private class SbdWebViewClient extends WebViewClient {
+    private class SupportClueWebViewClient extends WebViewClient {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             return routeUrl(request.getUrl().toString());
@@ -382,11 +385,11 @@ public class MainActivity extends Activity {
         }
     }
 
-    private class SbdWebChromeClient extends WebChromeClient {
+    private class SupportClueWebChromeClient extends WebChromeClient {
 
         /**
-         * Handles microphone requests made by Smart Business Desk pages inside WebView.
-         * Only AUDIO_CAPTURE from the trusted Smart Business Desk HTTPS domains is granted.
+         * Handles microphone requests made by Support Clue pages inside WebView.
+         * Only AUDIO_CAPTURE from the trusted Support Clue HTTPS domains is granted.
          */
         @Override
         public void onPermissionRequest(PermissionRequest request) {
@@ -631,7 +634,7 @@ public class MainActivity extends Activity {
             }
 
             File image = File.createTempFile(
-                    "sbd_camera_",
+                    "support_clue_camera_",
                     ".jpg",
                     directory
             );
@@ -762,7 +765,7 @@ public class MainActivity extends Activity {
                     );
 
             request.setTitle(fileName);
-            request.setDescription("Downloading from Smart Business Desk");
+            request.setDescription("Downloading from Support Clue");
 
             request.setNotificationVisibility(
                     DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED

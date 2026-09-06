@@ -1,2 +1,2 @@
-# Smart Business Desk intentionally uses no JavaScript bridge.
+# Support Clue intentionally uses no JavaScript bridge.
 # Keep rules minimal; release minification is disabled by default.

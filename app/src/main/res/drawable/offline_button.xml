@@ -3,14 +3,14 @@
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
             <corners android:radius="16dp" />
-            <solid android:color="#0A3B80" />
+            <solid android:color="@color/support_clue_orange_pressed" />
             <padding android:left="24dp" android:right="24dp" android:top="14dp" android:bottom="14dp" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="16dp" />
-            <solid android:color="@color/sbd_navy" />
+            <solid android:color="@color/support_clue_orange" />
             <padding android:left="24dp" android:right="24dp" android:top="14dp" android:bottom="14dp" />
         </shape>
     </item>
