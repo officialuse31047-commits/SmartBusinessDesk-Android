@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SmartBusinessDesk.Splash" parent="Theme.SmartBusinessDesk">
-        <item name="android:windowSplashScreenBackground">@color/sbd_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/sbd_splash_icon</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">@color/sbd_background</item>
+    <style name="Theme.SupportClue.Splash" parent="Theme.SupportClue">
+        <item name="android:windowSplashScreenBackground">@color/support_clue_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/support_clue_splash_icon</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/support_clue_background</item>
         <item name="android:windowBackground">@drawable/splash_background</item>
     </style>
 </resources>

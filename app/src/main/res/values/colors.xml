@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="sbd_navy">#082E68</color>
-    <color name="sbd_green">#009A67</color>
-    <color name="sbd_background">#F7FAFE</color>
-    <color name="sbd_text_secondary">#66758C</color>
+    <color name="support_clue_dark">#171B1F</color>
+    <color name="support_clue_orange">#FF5A00</color>
+    <color name="support_clue_orange_pressed">#D94700</color>
+    <color name="support_clue_background">#FFFFFF</color>
+    <color name="support_clue_text_secondary">#555B63</color>
     <color name="white">#FFFFFF</color>
 </resources>

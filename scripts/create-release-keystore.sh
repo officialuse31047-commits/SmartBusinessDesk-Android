@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUT="${1:-smart-business-desk-release.jks}"
-ALIAS="${2:-smartbusinessdesk}"
+OUT="${1:-support-clue-release.jks}"
+ALIAS="${2:-supportclue}"
 
 echo "Creating production signing keystore: $OUT"
 echo "You will be asked to choose a strong keystore/key password."

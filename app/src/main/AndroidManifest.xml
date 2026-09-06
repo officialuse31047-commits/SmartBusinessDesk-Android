@@ -14,11 +14,11 @@
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="Smart Business Desk"
+        android:label="@string/app_name"
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SmartBusinessDesk"
+        android:theme="@style/Theme.SupportClue"
         android:usesCleartextTraffic="false">
 
         <provider
@@ -36,14 +36,14 @@
             android:configChanges="keyboard|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.SmartBusinessDesk.Splash">
+            android:theme="@style/Theme.SupportClue.Splash">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Verified Android App Links. Internal Smart Business Desk links
+            <!-- Verified Android App Links. Internal Support Clue links
                  open the exact URL in this app's native android.webkit.WebView. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -51,7 +51,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="smartbusinessdesk.com" />
+                    android:host="supportclue.com" />
             </intent-filter>
 
             <intent-filter android:autoVerify="true">
@@ -60,7 +60,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="www.smartbusinessdesk.com" />
+                    android:host="www.supportclue.com" />
             </intent-filter>
 
         </activity>

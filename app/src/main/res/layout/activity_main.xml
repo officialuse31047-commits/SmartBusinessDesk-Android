@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/sbd_background">
+    android:background="@color/support_clue_background">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
@@ -23,14 +23,14 @@
         android:layout_height="3dp"
         android:layout_gravity="top"
         android:max="100"
-        android:progressTint="@color/sbd_green"
+        android:progressTint="@color/support_clue_orange"
         android:visibility="gone" />
 
     <ScrollView
         android:id="@+id/offlineView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/sbd_background"
+        android:background="@color/support_clue_background"
         android:fillViewport="true"
         android:visibility="gone">
 
@@ -49,12 +49,12 @@
                 android:layout_height="18dp" />
 
             <ImageView
-                android:layout_width="260dp"
-                android:layout_height="260dp"
+                android:layout_width="300dp"
+                android:layout_height="300dp"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/app_name"
                 android:scaleType="fitCenter"
-                android:src="@drawable/sbd_flat_logo" />
+                android:src="@drawable/support_clue_vertical_logo" />
 
             <Space
                 android:layout_width="1dp"
@@ -65,7 +65,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/offline_title"
-                android:textColor="@color/sbd_navy"
+                android:textColor="@color/support_clue_dark"
                 android:textSize="25sp"
                 android:textStyle="bold" />
 
@@ -76,7 +76,7 @@
                 android:gravity="center"
                 android:lineSpacingExtra="3dp"
                 android:text="@string/offline_message"
-                android:textColor="@color/sbd_text_secondary"
+                android:textColor="@color/support_clue_text_secondary"
                 android:textSize="17sp" />
 
             <Button

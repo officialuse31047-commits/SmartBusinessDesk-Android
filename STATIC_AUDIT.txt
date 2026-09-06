@@ -1,45 +1,45 @@
-Smart Business Desk Native WebView - Static Architecture Audit
-=============================================================
+Support Clue Native WebView - Static Architecture Audit
+=======================================================
 
-Generated UTC: 2026-08-31 13:03:56
+Updated UTC: 2026-09-06
 
 [1] Browser wrapper check
-Checking for Chrome/TWA/Custom Tabs wrapper code...
-OK: no TWA, Custom Tabs, androidx.browser, or forced Chrome package found.
-Primary container references:
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/java/com/smartbusinessdesk/app/MainActivity.java:31:import android.webkit.WebView;
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/java/com/smartbusinessdesk/app/MainActivity.java:32:import android.webkit.WebViewClient;
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/java/com/smartbusinessdesk/app/MainActivity.java:50: * The primary content container is android.webkit.WebView. This Activity does NOT use
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/res/layout/activity_main.xml:12:        <WebView
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/AndroidManifest.xml:43:                 open the exact URL in this app's native android.webkit.WebView. -->
+- Primary container: android.webkit.WebView
+- TWA: not used
+- Chrome Custom Tabs: not used
+- androidx.browser: not used
+- Forced Chrome package: not used
 
 [2] App identity
-10:        applicationId 'com.smartbusinessdesk.app'
-11:        minSdk 24
-12:        targetSdk 35
-13:        versionCode 1
-14:        versionName '1.0.0'
+- namespace/applicationId: com.supportclue.app
+- minimum SDK: 24
+- target/compile SDK: 36
+- versionCode: 1
+- versionName: 1.0.0
 
-[3] Verified App Link filters
-44:            <intent-filter android:autoVerify="true">
-50:                    android:host="smartbusinessdesk.com" />
-53:            <intent-filter android:autoVerify="true">
-59:                    android:host="www.smartbusinessdesk.com" />
+[3] Internal website and App Links
+- Home URL: https://supportclue.com/
+- Verified host: supportclue.com
+- Verified host: www.supportclue.com
+- Exact deep-link path and query are preserved inside the WebView.
 
 [4] Security markers
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/AndroidManifest.xml:14:        android:networkSecurityConfig="@xml/network_security_config"
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/AndroidManifest.xml:18:        android:usesCleartextTraffic="false">
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/java/com/smartbusinessdesk/app/MainActivity.java:122:            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-/mnt/data/SmartBusinessDeskNativeWebView/app/src/main/java/com/smartbusinessdesk/app/MainActivity.java:371:            handler.cancel();
+- Cleartext traffic disabled.
+- Mixed content disabled.
+- Invalid SSL certificates are rejected.
+- FileProvider authority is derived from applicationId.
+- No native JavaScript bridge is exposed.
 
-[5] Internal-domain WebView routing markers
-184:            if (!isInternalHost(host)) {
-194:    private boolean isInternalHost(String host) {
-205:        if (data == null || !isInternalHost(data.getHost())) {
-234:            if (isInternalHost(uri.getHost())) {
-235:                // Never route Smart Business Desk through Chrome or another browser.
-241:                return false; // WebView loads it itself.
-281:                    if (isInternalHost(fallbackUri.getHost())) {
-324:            if (!TextUtils.isEmpty(url) && isInternalHost(Uri.parse(url).getHost())) {
-450:                    if (isInternalHost(uri.getHost())) {
-633:            if (isInternalHost(uri.getHost())) {
+[5] Brand assets
+- Support Clue round logo: launcher and adaptive icon.
+- Support Clue stacked logo: splash and offline screen.
+- Support Clue orange/dark color palette applied to native UI.
+
+[6] Preserved features
+- Cookies and login session
+- Pull-to-refresh
+- Offline screen and Retry
+- File picker and camera capture
+- Authenticated downloads
+- Microphone permission for trusted Support Clue HTTPS origins
+- UPI, WhatsApp, phone, email, SMS, Maps, Play Store, and external-link handoff
