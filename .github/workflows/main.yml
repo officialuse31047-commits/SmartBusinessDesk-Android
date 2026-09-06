@@ -3,7 +3,7 @@ name: Build Support Clue APK & AAB
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "support-clue-rebrand" ]
 
 permissions:
   contents: read
