@@ -2,7 +2,7 @@
 <resources>
     <style name="Theme.SupportClue.Splash" parent="Theme.SupportClue">
         <item name="android:windowSplashScreenBackground">@color/support_clue_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/support_clue_splash_icon</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@color/support_clue_background</item>
         <item name="android:windowBackground">@drawable/splash_background</item>
     </style>
