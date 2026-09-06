@@ -6,7 +6,7 @@
         android:height="290dp"
         android:gravity="center">
         <bitmap
-            android:gravity="center"
+            android:gravity="fill"
             android:src="@drawable/support_clue_splash_icon" />
     </item>
 </layer-list>
