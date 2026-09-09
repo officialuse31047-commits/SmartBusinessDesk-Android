@@ -21,6 +21,7 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.SslErrorHandler;
 import android.webkit.URLUtil;
@@ -136,6 +137,11 @@ public class MainActivity extends Activity {
 
         WebView.setWebContentsDebuggingEnabled(false);
 
+        webView.addJavascriptInterface(
+                new SupportClueJavascriptBridge(),
+                "SupportClueAndroid"
+        );
+
         webView.setWebViewClient(new SupportClueWebViewClient());
         webView.setWebChromeClient(new SupportClueWebChromeClient());
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) ->
@@ -166,6 +172,54 @@ public class MainActivity extends Activity {
                 Toast.makeText(this, R.string.offline_title, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /**
+     * Watches the existing website body class used by the mobile menu.
+     * When the menu is open, native Android pull-to-refresh is disabled.
+     */
+    private void installMobileMenuRefreshBridge() {
+        String script =
+                "(function() {" +
+                "    if (!document.body) {" +
+                "        return;" +
+                "    }" +
+                "    var notifyAndroid = function() {" +
+                "        if (window.SupportClueAndroid" +
+                "                && typeof window.SupportClueAndroid.setMobileMenuOpen === 'function') {" +
+                "            window.SupportClueAndroid.setMobileMenuOpen(" +
+                "                document.body.classList.contains('supportclue-mobile-menu-open')" +
+                "            );" +
+                "        }" +
+                "    };" +
+                "    if (!window.__supportClueMenuRefreshObserver) {" +
+                "        window.__supportClueMenuRefreshObserver = new MutationObserver(function() {" +
+                "            notifyAndroid();" +
+                "        });" +
+                "        window.__supportClueMenuRefreshObserver.observe(document.body, {" +
+                "            attributes: true," +
+                "            attributeFilter: ['class']" +
+                "        });" +
+                "    }" +
+                "    notifyAndroid();" +
+                "})();";
+
+        webView.evaluateJavascript(script, null);
+    }
+
+    private class SupportClueJavascriptBridge {
+
+        @JavascriptInterface
+        public void setMobileMenuOpen(boolean isOpen) {
+            runOnUiThread(() -> {
+                if (swipeRefresh == null) {
+                    return;
+                }
+
+                swipeRefresh.setRefreshing(false);
+                swipeRefresh.setEnabled(!isOpen);
+            });
+        }
     }
 
     private void loadInternalUrl(String url) {
@@ -342,6 +396,7 @@ public class MainActivity extends Activity {
             pageProgress.setProgress(100);
             pageProgress.setVisibility(View.GONE);
             swipeRefresh.setRefreshing(false);
+            installMobileMenuRefreshBridge();
             CookieManager.getInstance().flush();
         }
 
